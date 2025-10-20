@@ -2,6 +2,7 @@ import express from "express";
 import createClient from "../db/index.js";
 import { nf1Fields } from "../utils/fields.js";
 import { createInsertRoute } from "../utils/routeUtils.js";
+import nf1Queries from "../selectQueries/nf1.js";
 
 const router = new express.Router();
 
@@ -24,8 +25,7 @@ router.get("/truncate", async (req, res) => {
 router.get("/allOrders", async (req, res) => {
   const client = createClient();
   try {
-    const sql = `SELECT * FROM nf1.orders 
-    ORDER BY order_id, product_name, supplier_name, warehouse_region;`;
+    const sql = nf1Queries.getAllOrders;
 
     const startTime = process.hrtime.bigint(); // High-resolution time start
 
@@ -54,26 +54,7 @@ router.get("/allProducts_stock", async (req, res) => {
     const startTime = process.hrtime.bigint(); // High-resolution time start
 
     await client.connect();
-    const sql = `WITH supplier_contacts_agg AS (
-      SELECT 
-          supplier_name,
-          STRING_AGG(DISTINCT phone, ', ') AS supplier_phones,
-          STRING_AGG(DISTINCT email, ', ') AS supplier_emails
-      FROM nf1.supplier_contacts
-      GROUP BY supplier_name
-    )
-    SELECT 
-        ps.id AS product_id,
-        product_name, category_name,
-        ps.supplier_name,
-        sca.supplier_phones, 
-        sca.supplier_emails,
-        warehouse_region, warehouse_city,
-        warehouse_street, warehouse_building,
-        warehouse_apartment, price
-    FROM nf1.products_stock ps
-    LEFT JOIN supplier_contacts_agg sca ON sca.supplier_name = ps.supplier_name
-    ORDER BY ps.id;`;
+    const sql = nf1Queries.getAllProductsStock;
 
     const result = await client.query(sql);
 
