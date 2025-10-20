@@ -1,9 +1,11 @@
-export function createInsertRoute(pool, schema, fieldKey, fieldsName) {
+export function createInsertRoute(createClient, schema, fieldKey, fieldsName) {
   return async (req, res) => {
+    console.log(`INSERT INTO ${schema}.${fieldKey}`);
     const data = req.body[fieldKey];
     if (!data || !data.length) {
       return res.status(400).json({ error: `Field "${fieldKey}" is required` });
     }
+    const client = createClient();
     try {
       const sql = `INSERT INTO ${schema}.${fieldKey} (${fieldsName.join(
         ", "
@@ -19,23 +21,25 @@ export function createInsertRoute(pool, schema, fieldKey, fieldsName) {
       const values = [];
 
       for (const obj of data) values.push(...fieldsName.map((f) => obj[f]));
-
-      const result = await pool.query(sql, values);
+      await client.connect();
+      const result = await client.query(sql, values);
       res.json(result);
     } catch (err) {
       console.log(err);
-      return res
+      res
         .status(400)
         .json({ errorFrom: `${schema}.${fieldKey}`, error: err.message });
+    } finally {
+      client.end();
     }
   };
 }
 
-export async function getTablesColumns(pool, schema, tables) {
+export async function getTablesColumns(client, schema, tables) {
   const result = {};
 
   for (const table of tables) {
-    const res = await pool.query(
+    const res = await client.query(
       `
       SELECT column_name
       FROM information_schema.columns

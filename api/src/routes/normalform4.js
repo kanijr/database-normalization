@@ -1,23 +1,29 @@
 import express from "express";
-import pool from "../db/index.js";
+import createClient from "../db/index.js";
 import { nf4Fields } from "../utils/fields.js";
 import { createInsertRoute } from "../utils/routeUtils.js";
 
 const router = new express.Router();
 
 router.get("/truncate", async (req, res) => {
+  const client = createClient();
   try {
+    await client.connect();
+
     for (const k of Object.keys(nf4Fields)) {
-      await pool.query(`TRUNCATE TABLE nf4.${k} RESTART IDENTITY CASCADE;`);
+      await client.query(`TRUNCATE TABLE nf4.${k} RESTART IDENTITY CASCADE;`);
     }
 
     res.status(200).json({});
   } catch (err) {
     return res.status(400).json({ error: err.message });
+  } finally {
+    client.end();
   }
 });
 
 router.get("/allOrders", async (req, res) => {
+  const client = createClient();
   try {
     // EXPLAIN ANALYZE
     const sql = `SELECT oi.order_id AS order_id, first_name AS customer_first_name, last_name AS customer_last_name,
@@ -42,8 +48,8 @@ router.get("/allOrders", async (req, res) => {
       JOIN nf4.regions rw ON w.region_id = rw.id
     ORDER BY order_id, product_name, supplier_name, warehouse_region;`;
     const startTime = process.hrtime.bigint(); // High-resolution time start
-
-    const result = await pool.query(sql);
+    await client.connect();
+    const result = await client.query(sql);
 
     const endTime = process.hrtime.bigint(); // High-resolution time end
     const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
@@ -56,31 +62,25 @@ router.get("/allOrders", async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
+  } finally {
+    client.end();
   }
 });
 
 router.get("/allProducts_stock", async (req, res) => {
+  const client = createClient();
   try {
     const startTime = process.hrtime.bigint(); // High-resolution time start
 
-    const sql = `WITH supplier_contacts_agg AS (
-      SELECT 
-          sp.supplier_id,
-          STRING_AGG(DISTINCT sp.phone, ', ') AS supplier_phones,
-          STRING_AGG(DISTINCT se.email, ', ') AS supplier_emails
-      FROM nf4.supplier_contact_phones sp
-      JOIN nf4.supplier_contact_emails se ON se.supplier_id = sp.supplier_id
-      GROUP BY sp.supplier_id
-    )
-    SELECT 
+    const sql = `SELECT
         CAST(ROW_NUMBER() OVER(
           ORDER BY psw.product_id, psw.supplier_id, psw.warehouse_id
         ) AS INT) AS product_id,
         ps.product_name,
         c.category_name,
         s.supplier_name,
-        sca.supplier_phones,
-        sca.supplier_emails,
+        sp.phones AS supplier_phones,
+        se.emails AS supplier_emails,
         r.region_name AS warehouse_region,
         w.city AS warehouse_city,
         w.street AS warehouse_street,
@@ -91,11 +91,21 @@ router.get("/allProducts_stock", async (req, res) => {
     JOIN nf4.products ps ON ps.id = psw.product_id
     JOIN nf4.categories c ON c.id = ps.category_id
     JOIN nf4.suppliers s ON s.id = psw.supplier_id
-    LEFT JOIN supplier_contacts_agg sca ON sca.supplier_id = s.id
     JOIN nf4.warehouses w ON w.id = psw.warehouse_id
+    LEFT JOIN (
+            SELECT supplier_id, STRING_AGG(DISTINCT phone, ', ') AS phones
+            FROM nf4.supplier_contact_phones
+            GROUP BY supplier_id
+        ) sp ON sp.supplier_id = s.id
+    LEFT JOIN ( 
+            SELECT supplier_id, STRING_AGG(DISTINCT email, ', ') AS emails
+            FROM nf4.supplier_contact_emails
+            GROUP BY supplier_id
+        ) se ON se.supplier_id = s.id
     JOIN nf4.regions r ON r.id = w.region_id`;
 
-    const result = await pool.query(sql);
+    await client.connect();
+    const result = await client.query(sql);
 
     const endTime = process.hrtime.bigint(); // High-resolution time end
     const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
@@ -110,6 +120,8 @@ router.get("/allProducts_stock", async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
+  } finally {
+    client.end();
   }
 });
 
@@ -118,7 +130,7 @@ Object.keys(nf4Fields).forEach((key) => {
   router.post(
     `/${key}`,
     createInsertRoute(
-      pool,
+      createClient,
       "nf4",
       key,
       nf4Fields[key].filter((f) => f !== "id")

@@ -1,23 +1,28 @@
 import express from "express";
-import pool from "../db/index.js";
+import createClient from "../db/index.js";
 import { nf3Fields } from "../utils/fields.js";
 import { createInsertRoute } from "../utils/routeUtils.js";
 
 const router = new express.Router();
 
 router.get("/truncate", async (req, res) => {
+  const client = createClient();
   try {
-    for (const k of Object.keys(nf3Fields)) {
-      await pool.query(`TRUNCATE TABLE nf3.${k} RESTART IDENTITY CASCADE;`);
+    await client.connect();
+    for (const key of Object.keys(nf3Fields)) {
+      await client.query(`TRUNCATE TABLE nf3.${key} RESTART IDENTITY CASCADE;`);
     }
 
     res.status(200).json({});
   } catch (err) {
     return res.status(400).json({ error: err.message });
+  } finally {
+    client.end();
   }
 });
 
 router.get("/allOrders", async (req, res) => {
+  const client = createClient();
   try {
     // EXPLAIN ANALYZE
     const sql = `SELECT oi.order_id AS order_id, first_name AS customer_first_name, last_name AS customer_last_name,
@@ -43,8 +48,8 @@ router.get("/allOrders", async (req, res) => {
     ORDER BY order_id, product_name, supplier_name, warehouse_region;`;
 
     const startTime = process.hrtime.bigint(); // High-resolution time start
-
-    const result = await pool.query(sql);
+    await client.connect();
+    const result = await client.query(sql);
 
     const endTime = process.hrtime.bigint(); // High-resolution time end
     const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
@@ -57,30 +62,25 @@ router.get("/allOrders", async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
+  } finally {
+    client.end();
   }
 });
 
 router.get("/allProducts_stock", async (req, res) => {
+  const client = createClient();
   try {
     const startTime = process.hrtime.bigint(); // High-resolution time start
 
-    const sql = `WITH supplier_contacts_agg AS (
-      SELECT 
-          supplier_id,
-          STRING_AGG(DISTINCT phone, ', ') AS supplier_phones,
-          STRING_AGG(DISTINCT email, ', ') AS supplier_emails
-      FROM nf3.supplier_contacts
-      GROUP BY supplier_id
-    )
-    SELECT 
+    const sql = `SELECT 
         CAST(ROW_NUMBER() OVER(
           ORDER BY psw.product_id, psw.supplier_id, psw.warehouse_id
         ) AS INT) AS product_id,
         ps.product_name,
         c.category_name,
         s.supplier_name,
-        sca.supplier_phones,
-        sca.supplier_emails,
+        sc.supplier_phones,
+        sc.supplier_emails,
         r.region_name AS warehouse_region,
         w.city AS warehouse_city,
         w.street AS warehouse_street,
@@ -91,11 +91,19 @@ router.get("/allProducts_stock", async (req, res) => {
     JOIN nf3.products ps ON ps.id = psw.product_id
     JOIN nf3.categories c ON c.id = ps.category_id
     JOIN nf3.suppliers s ON s.id = psw.supplier_id
-    LEFT JOIN supplier_contacts_agg sca ON sca.supplier_id = s.id
+    LEFT JOIN (
+      SELECT 
+          supplier_id,
+          STRING_AGG(DISTINCT phone, ', ') AS supplier_phones,
+          STRING_AGG(DISTINCT email, ', ') AS supplier_emails
+      FROM nf3.supplier_contacts
+      GROUP BY supplier_id
+    ) sc ON sc.supplier_id = s.id
     JOIN nf3.warehouses w ON w.id = psw.warehouse_id
     JOIN nf3.regions r ON r.id = w.region_id;`;
 
-    const result = await pool.query(sql);
+    await client.connect();
+    const result = await client.query(sql);
 
     const endTime = process.hrtime.bigint(); // High-resolution time end
     const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
@@ -110,6 +118,8 @@ router.get("/allProducts_stock", async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
+  } finally {
+    client.end();
   }
 });
 
@@ -118,7 +128,7 @@ Object.keys(nf3Fields).forEach((key) => {
   router.post(
     `/${key}`,
     createInsertRoute(
-      pool,
+      createClient,
       "nf3",
       key,
       nf3Fields[key].filter((f) => f !== "id")

@@ -17,6 +17,6 @@ app.use("/api/nf3", nf3Routes);
 app.use("/api/nf4", nf4Routes);
 app.use("/api/nf5", nf5Routes);
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log("Server listening on port " + port);
 });
