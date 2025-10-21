@@ -1,5 +1,7 @@
 const nf3Queries = {
-  getAllOrders: `SELECT oi.order_id AS order_id, first_name AS customer_first_name, last_name AS customer_last_name,
+  getAllOrders: (
+    customerId
+  ) => `SELECT oi.order_id AS order_id, first_name AS customer_first_name, last_name AS customer_last_name,
     email AS customer_email, order_date, pm.method_name AS payment_method,
 	  SUM(p.price * oi.quantity) OVER (PARTITION BY o.id) AS payment_amount, payment_fee, 
     dm.method_name AS delivery_method, delivery_fee, rda.region_name AS delivery_region, da.city AS delivery_city,
@@ -19,6 +21,7 @@ const nf3Queries = {
       JOIN nf3.suppliers s ON oi.supplier_id = s.id
       JOIN nf3.warehouses w ON oi.warehouse_id = w.id
       JOIN nf3.regions rw ON w.region_id = rw.id
+      ${customerId !== undefined ? `WHERE c.id = ${customerId}` : ""}
     ORDER BY order_id, product_name, supplier_name, warehouse_region, warehouse_city;`,
 
   getAllProductsStock: `SELECT 

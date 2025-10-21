@@ -1,5 +1,7 @@
 const nf2Queries = {
-  getAllOrders: `SELECT oi.order_id AS order_id, first_name AS customer_first_name, 
+  getAllOrders: (
+    customerId
+  ) => `SELECT oi.order_id AS order_id, first_name AS customer_first_name, 
     last_name AS customer_last_name, email AS customer_email, order_date, payment_method,
     payment_amount, payment_fee, delivery_method, delivery_fee, delivery_region,
     delivery_city, delivery_street, delivery_house, delivery_apartment, delivery_date,
@@ -9,6 +11,7 @@ const nf2Queries = {
       JOIN nf2.orders o ON oi.order_id = o.id
       JOIN nf2.customers c ON o.customer_id = c.id
       JOIN nf2.products_stock p ON oi.product_id = p.id
+    ${customerId !== undefined ? `WHERE c.id = ${customerId}` : ""}
     ORDER BY order_id, product_name, supplier_name, warehouse_region, warehouse_city;`,
 
   getAllProductsStock: `SELECT 

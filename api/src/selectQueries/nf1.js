@@ -1,5 +1,14 @@
 const nf1Queries = {
-  getAllOrders: `SELECT * FROM nf1.orders 
+  getAllOrders: (
+    customerFirstName,
+    customerLastName,
+    customerEmail
+  ) => `SELECT * FROM nf1.orders ${
+    customerFirstName !== undefined
+      ? `WHERE customer_first_name = '${customerFirstName}' AND 
+      customer_last_name = '${customerLastName}' AND customer_email = '${customerEmail}'`
+      : ""
+  } 
     ORDER BY order_id, product_name, supplier_name, warehouse_region, warehouse_city;`,
 
   getAllProductsStock: `SELECT 

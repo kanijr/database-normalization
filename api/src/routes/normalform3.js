@@ -16,7 +16,7 @@ router.get("/truncate", async (req, res) => {
 
     res.status(200).json({});
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   } finally {
     client.end();
   }
@@ -25,7 +25,7 @@ router.get("/truncate", async (req, res) => {
 router.get("/allOrders", async (req, res) => {
   const client = createClient();
   try {
-    const sql = nf3Queries.getAllOrders;
+    const sql = nf3Queries.getAllOrders();
 
     await client.connect();
 
@@ -43,7 +43,40 @@ router.get("/allOrders", async (req, res) => {
       rows: result.rows,
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.end();
+  }
+});
+
+router.get("/ordersByCustomer", async (req, res) => {
+  const client = createClient();
+  const { customer_id } = req.query;
+  if (!customer_id) {
+    return res.status(400).json({ error: "Missing query parameters" });
+  }
+  try {
+    const sql = nf3Queries.getAllOrders(customer_id);
+
+    await client.connect();
+
+    const startTime = process.hrtime.bigint(); // High-resolution time start
+
+    const result = await client.query(sql);
+
+    const endTime = process.hrtime.bigint(); // High-resolution time end
+    const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
+
+    console.log(
+      `\nNF3 Orders by customer: Select query executed in ${durationMs} ms`
+    );
+
+    res.json({
+      durationMs,
+      rows: result.rows,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   } finally {
     client.end();
   }
@@ -72,7 +105,7 @@ router.get("/allProducts_stock", async (req, res) => {
       rows: result.rows,
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   } finally {
     client.end();
   }
