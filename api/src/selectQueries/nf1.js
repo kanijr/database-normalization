@@ -1,6 +1,6 @@
 const nf1Queries = {
   getAllOrders: `SELECT * FROM nf1.orders 
-    ORDER BY order_id, product_name, supplier_name, warehouse_region;`,
+    ORDER BY order_id, product_name, supplier_name, warehouse_region, warehouse_city;`,
 
   getAllProductsStock: `SELECT 
         ps.id AS product_id,

@@ -19,7 +19,7 @@ const nf5Queries = {
       JOIN nf5.suppliers s ON oi.supplier_id = s.id
       JOIN nf5.warehouses w ON oi.warehouse_id = w.id
       JOIN nf5.regions rw ON w.region_id = rw.id
-    ORDER BY order_id, product_name, supplier_name, warehouse_region;`,
+    ORDER BY order_id, product_name, supplier_name, warehouse_region, warehouse_city;`,
 
   getAllProductsStock: `SELECT 
         CAST(ROW_NUMBER() OVER(
@@ -52,12 +52,12 @@ const nf5Queries = {
     JOIN nf5.warehouses w ON w.id = psw.warehouse_id
     LEFT JOIN (
             SELECT supplier_id, STRING_AGG(DISTINCT phone, ', ') AS phones
-            FROM nf4.supplier_contact_phones
+            FROM nf5.supplier_contact_phones
             GROUP BY supplier_id
         ) sp ON sp.supplier_id = s.id
     LEFT JOIN ( 
             SELECT supplier_id, STRING_AGG(DISTINCT email, ', ') AS emails
-            FROM nf4.supplier_contact_emails
+            FROM nf5.supplier_contact_emails
             GROUP BY supplier_id
         ) se ON se.supplier_id = s.id
     JOIN nf5.regions r ON r.id = w.region_id`,

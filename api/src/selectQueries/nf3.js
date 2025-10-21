@@ -19,7 +19,7 @@ const nf3Queries = {
       JOIN nf3.suppliers s ON oi.supplier_id = s.id
       JOIN nf3.warehouses w ON oi.warehouse_id = w.id
       JOIN nf3.regions rw ON w.region_id = rw.id
-    ORDER BY order_id, product_name, supplier_name, warehouse_region;`,
+    ORDER BY order_id, product_name, supplier_name, warehouse_region, warehouse_city;`,
 
   getAllProductsStock: `SELECT 
         CAST(ROW_NUMBER() OVER(
@@ -28,39 +28,28 @@ const nf3Queries = {
         ps.product_name,
         c.category_name,
         s.supplier_name,
-        sp.phones AS supplier_phones,
-        se.emails AS supplier_emails,
+        sc.supplier_phones,
+        sc.supplier_emails,
         r.region_name AS warehouse_region,
         w.city AS warehouse_city,
         w.street AS warehouse_street,
         w.building AS warehouse_building,
         w.apartment AS warehouse_apartment,
         ps.price
-    FROM (
-      SELECT 
-        ps.product_id,
-        ps.supplier_id,
-        sw.warehouse_id
-      FROM nf5.product_supplier ps
-      JOIN nf5.supplier_warehouse sw ON sw.supplier_id = ps.supplier_id
-      JOIN nf5.product_warehouse pw ON (pw.product_id = ps.product_id) AND
-        (pw.warehouse_id = sw.warehouse_id)
-      ) psw
-    JOIN nf5.products ps ON ps.id = psw.product_id
-    JOIN nf5.categories c ON c.id = ps.category_id
-    JOIN nf5.suppliers s ON s.id = psw.supplier_id
-    JOIN nf5.warehouses w ON w.id = psw.warehouse_id
+    FROM nf3.product_supplier_warehouse psw
+    JOIN nf3.products ps ON ps.id = psw.product_id
+    JOIN nf3.categories c ON c.id = ps.category_id
+    JOIN nf3.suppliers s ON s.id = psw.supplier_id
     LEFT JOIN (
-            SELECT supplier_id, STRING_AGG(DISTINCT phone, ', ') AS phones
-            FROM nf4.supplier_contact_phones
-            GROUP BY supplier_id
-        ) sp ON sp.supplier_id = s.id
-    LEFT JOIN ( 
-            SELECT supplier_id, STRING_AGG(DISTINCT email, ', ') AS emails
-            FROM nf4.supplier_contact_emails
-            GROUP BY supplier_id
-        ) se ON se.supplier_id = s.id
-    JOIN nf5.regions r ON r.id = w.region_id`,
+      SELECT 
+          supplier_id,
+          STRING_AGG(DISTINCT phone, ', ') AS supplier_phones,
+          STRING_AGG(DISTINCT email, ', ') AS supplier_emails
+      FROM nf3.supplier_contacts
+      GROUP BY supplier_id
+    ) sc ON sc.supplier_id = s.id
+    JOIN nf3.warehouses w ON w.id = psw.warehouse_id
+    JOIN nf3.regions r ON r.id = w.region_id;`,
 };
 
 export default nf3Queries;

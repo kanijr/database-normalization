@@ -9,7 +9,7 @@ const nf2Queries = {
       JOIN nf2.orders o ON oi.order_id = o.id
       JOIN nf2.customers c ON o.customer_id = c.id
       JOIN nf2.products_stock p ON oi.product_id = p.id
-    ORDER BY order_id, product_name, supplier_name, warehouse_region;`,
+    ORDER BY order_id, product_name, supplier_name, warehouse_region, warehouse_city;`,
 
   getAllProductsStock: `SELECT 
         ps.id AS product_id,

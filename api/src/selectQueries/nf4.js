@@ -19,7 +19,7 @@ const nf4Queries = {
       JOIN nf4.suppliers s ON oi.supplier_id = s.id
       JOIN nf4.warehouses w ON oi.warehouse_id = w.id
       JOIN nf4.regions rw ON w.region_id = rw.id
-    ORDER BY order_id, product_name, supplier_name, warehouse_region;`,
+    ORDER BY order_id, product_name, supplier_name, warehouse_region, warehouse_city;`,
 
   getAllProductsStock: `SELECT
         CAST(ROW_NUMBER() OVER(
