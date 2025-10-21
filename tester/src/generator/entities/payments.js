@@ -26,6 +26,21 @@ export function generateDeliveryRegionPayments(
   const uniqueCombinations = new Set();
   const results = [];
 
+  for (const region of regions) {
+    const delivery = faker.helpers.arrayElement(deliveryTypes);
+    const payment = faker.helpers.arrayElement(payments);
+
+    const key = `${delivery.id}-${region.id}-${payment.id}`;
+    if (!uniqueCombinations.has(key)) {
+      uniqueCombinations.add(key);
+      results.push({
+        delivery_method_id: delivery.id,
+        region_id: region.id,
+        payment_method_id: payment.id,
+      });
+    }
+  }
+
   const limit = Math.min(
     n,
     Math.max(
