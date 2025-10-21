@@ -1,6 +1,5 @@
 export function createInsertRoute(createClient, schema, fieldKey, fieldsName) {
   return async (req, res) => {
-    console.log(`INSERT INTO ${schema}.${fieldKey}`);
     const data = req.body[fieldKey];
     if (!data || !data.length) {
       return res.status(400).json({ error: `Field "${fieldKey}" is required` });

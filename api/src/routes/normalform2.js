@@ -27,9 +27,10 @@ router.get("/allOrders", async (req, res) => {
 
   try {
     const sql = nf2Queries.getAllOrders;
-    const startTime = process.hrtime.bigint(); // High-resolution time start
 
     await client.connect();
+
+    const startTime = process.hrtime.bigint(); // High-resolution time start
 
     const result = await client.query(sql);
 
@@ -52,8 +53,9 @@ router.get("/allOrders", async (req, res) => {
 router.get("/allProducts_stock", async (req, res) => {
   const client = createClient();
   try {
-    const startTime = process.hrtime.bigint(); // High-resolution time start
     await client.connect();
+
+    const startTime = process.hrtime.bigint(); // High-resolution time start
 
     const sql = nf2Queries.getAllProductsStock;
 
