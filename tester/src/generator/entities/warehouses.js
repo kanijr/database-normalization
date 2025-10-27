@@ -1,26 +1,28 @@
 import { fakerUK as faker } from "@faker-js/faker";
 
-export function generateWarehouses(regions, n = 20) {
-  const blockLabels = ["A", "B", "C", "D", "E", "F", "G", "H"];
-
+export function generateWarehouses(addresses, n = 20) {
+  const names = [];
   return Array.from({ length: n }, (v, i) => {
-    const region = faker.helpers.arrayElement(regions);
-    const hasBlock = Math.random() < 0.2;
+    const address = faker.helpers.arrayElement(addresses);
+    let name = `Warehouse ${faker.commerce.department()} #${faker.number.int({
+      min: 1,
+      max: 10,
+    })}`;
 
-    const blockSuffix = faker.helpers.maybe(
-      () => faker.number.int({ min: 1, max: 3 }),
-      { probability: 0.4 }
-    );
+    if (names.includes(name)) {
+      while (names.includes(name)) {
+        name = `Warehouse ${faker.commerce.department()} #${faker.number.int({
+          min: 1,
+          max: 10,
+        })}`;
+      }
+    }
+    names.push(name);
 
     return {
       id: i + 1,
-      region_id: region.id,
-      city: faker.location.city(),
-      street: faker.location.street(),
-      building: faker.location.buildingNumber(),
-      apartment: hasBlock
-        ? faker.helpers.arrayElement(blockLabels) + (blockSuffix || "")
-        : null,
+      warehouse_name: name,
+      address_id: address.id,
     };
   });
 }

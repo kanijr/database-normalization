@@ -21,6 +21,7 @@ CREATE TABLE nf1.orders (
 	product_name VARCHAR(255) NOT NULL,
 	category_name VARCHAR(80) NOT NULL,
 	supplier_name VARCHAR(255) NOT NULL,
+	warehouse_name VARCHAR(100) NOT NULL,
 	warehouse_region VARCHAR(100) NOT NULL,
 	warehouse_city VARCHAR(80) NOT NULL,
 	warehouse_street VARCHAR(100) NOT NULL,
@@ -35,6 +36,7 @@ CREATE TABLE nf1.products_stock (
 	product_name VARCHAR(255) NOT NULL,
 	category_name VARCHAR(80) NOT NULL,
 	supplier_name VARCHAR(255) NOT NULL,
+	warehouse_name VARCHAR(100) NOT NULL,
 	warehouse_region VARCHAR(100) NOT NULL,
 	warehouse_city VARCHAR(80) NOT NULL,
 	warehouse_street VARCHAR(100) NOT NULL,
@@ -44,8 +46,8 @@ CREATE TABLE nf1.products_stock (
 );
 
 CREATE TABLE nf1.supplier_contacts(
-	id SERIAL PRIMARY KEY,
 	supplier_name VARCHAR(255) NOT NULL,
 	phone VARCHAR(30) NOT NULL,
-	email VARCHAR(255) NOT NULL
+	email VARCHAR(255) NOT NULL,
+	PRIMARY KEY (supplier_name,phone,email)
 );

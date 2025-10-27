@@ -24,25 +24,26 @@ CREATE TABLE nf5.regions (
     region_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE nf5.delivery_payments (
-	delivery_method_id INT NOT NULL REFERENCES nf5.delivery_methods(id),
-	payment_method_id INT NOT NULL REFERENCES nf5.payment_methods(id),
-	PRIMARY KEY (delivery_method_id, payment_method_id)
+CREATE TABLE nf5.cities (
+    id SERIAL PRIMARY KEY,
+    city_name VARCHAR(100) NOT NULL,
+	region_id INT NOT NULL REFERENCES nf5.regions(id),
+	CONSTRAINT uq_city_region UNIQUE (city_name,region_id)
 );
 
-CREATE TABLE nf5.region_payments (
-	region_id INT NOT NULL REFERENCES nf5.regions(id),
-	payment_method_id INT NOT NULL REFERENCES nf5.payment_methods(id),
-	PRIMARY KEY (region_id, payment_method_id)
+CREATE TABLE nf5.streets (
+    id SERIAL PRIMARY KEY,
+    street_name VARCHAR(100) NOT NULL,
+	city_id INT NOT NULL REFERENCES nf5.cities(id),
+	CONSTRAINT uq_street_city UNIQUE (street_name,city_id)
 );
 
-CREATE TABLE nf5.delivery_addresses(
-	id SERIAL PRIMARY KEY,
-	region_id INT NOT NULL REFERENCES nf5.regions(id),
-	city VARCHAR(80) NOT NULL,
-	street VARCHAR(100) NOT NULL,
-	house VARCHAR(10) NOT NULL,
-	apartment VARCHAR(10)
+CREATE TABLE nf5.addresses (
+    id SERIAL PRIMARY KEY,
+    building VARCHAR(10) NOT NULL,
+	apartment VARCHAR(10),
+	street_id INT NOT NULL REFERENCES nf5.streets(id),
+	CONSTRAINT uq_address_street UNIQUE (building,apartment,street_id)
 );
 
 CREATE TABLE nf5.orders (
@@ -51,7 +52,7 @@ CREATE TABLE nf5.orders (
 	customer_id INT NOT NULL REFERENCES nf5.customers(id),
 	payment_method_id INT NOT NULL REFERENCES nf5.payment_methods(id),
 	delivery_method_id INT NOT NULL REFERENCES nf5.delivery_methods(id),
-	delivery_address_id INT NOT NULL REFERENCES nf5.delivery_addresses(id),
+	delivery_address_id INT NOT NULL REFERENCES nf5.addresses(id),
 	delivery_date DATE NOT NULL,
 	delivery_status BOOLEAN NOT NULL DEFAULT FALSE
 );
@@ -80,13 +81,9 @@ CREATE TABLE nf5.supplier_contact_emails (
 
 CREATE TABLE nf5.warehouses ( 
 	id SERIAL PRIMARY KEY,
-	region_id INT NOT NULL REFERENCES nf5.regions(id),
-	city VARCHAR(80) NOT NULL,
-	street VARCHAR(100) NOT NULL,
-	building VARCHAR(10) NOT NULL,
-	apartment VARCHAR(10)
+	warehouse_name VARCHAR(100) UNIQUE NOT NULL,
+	address_id INT NOT NULL REFERENCES nf5.addresses(id)
 );
-
 CREATE TABLE nf5.products (
 	id SERIAL PRIMARY KEY,
 	product_name VARCHAR(255) NOT NULL,
@@ -95,32 +92,31 @@ CREATE TABLE nf5.products (
 );
 
 CREATE TABLE nf5.product_supplier (
+	id SERIAL PRIMARY KEY,
 	product_id INT NOT NULL REFERENCES nf5.products(id),
 	supplier_id INT NOT NULL REFERENCES nf5.suppliers(id),
-	PRIMARY KEY (product_id, supplier_id)
+	CONSTRAINT uq_product_supplier UNIQUE(product_id, supplier_id)
 );
 
 CREATE TABLE nf5.supplier_warehouse (
+	id SERIAL PRIMARY KEY,
 	supplier_id INT NOT NULL REFERENCES nf5.suppliers(id),
 	warehouse_id INT NOT NULL REFERENCES nf5.warehouses(id),
-	PRIMARY KEY (supplier_id, warehouse_id)
+	CONSTRAINT uq_supplier_warehouse UNIQUE(supplier_id, warehouse_id)
 );
 
 CREATE TABLE nf5.product_warehouse (
+	id SERIAL PRIMARY KEY,
 	product_id INT NOT NULL REFERENCES nf5.products(id),
 	warehouse_id INT NOT NULL REFERENCES nf5.warehouses(id),
-	PRIMARY KEY (product_id, warehouse_id)
+	CONSTRAINT uq_product_warehouse UNIQUE(product_id, warehouse_id)
 );
 
 CREATE TABLE nf5.order_items (
 	order_id INT NOT NULL REFERENCES nf5.orders(id),
-	product_id INT NOT NULL,
-	supplier_id INT NOT NULL,
-	warehouse_id INT NOT NULL,
+	product_supplier_id INT NOT NULL REFERENCES nf5.product_supplier(id),
+	supplier_warehouse_id INT NOT NULL REFERENCES nf5.supplier_warehouse(id),
 	quantity INT NOT NULL CHECK(quantity > 0),
-	FOREIGN KEY (product_id, supplier_id) REFERENCES nf5.product_supplier(product_id, supplier_id),
-	FOREIGN KEY (supplier_id, warehouse_id) REFERENCES nf5.supplier_warehouse(supplier_id, warehouse_id),
-	FOREIGN KEY (product_id, warehouse_id) REFERENCES nf5.product_warehouse(product_id, warehouse_id),
-	PRIMARY KEY (order_id, product_id, supplier_id, warehouse_id)
+	PRIMARY KEY (order_id, product_supplier_id, supplier_warehouse_id)
 );
 

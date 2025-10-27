@@ -3,8 +3,8 @@ import {
   generatePaymentMethods,
   generateDeliveryMethods,
   generateRegions,
-  generateDeliveryRegionPayments,
-  generateDeliveryAddresses,
+  generateCities,
+  generateStreets,
   generateOrders,
   generateCategories,
   generateWarehouses,
@@ -13,122 +13,34 @@ import {
   generateProductSupplierWarehouses,
   generateOrderItems,
   generateSupplierContacts,
+  generateAddresses,
 } from "../entities/index.js";
 import _ from "lodash";
-
-// export default function combineNF3(sizes) {
-//   const tables = {};
-
-//   tables.customers = generateCustomers(500);
-//   tables.payment_methods = generatePaymentMethods();
-//   tables.delivery_methods = generateDeliveryMethods();
-//   tables.regions = generateRegions(27);
-//   tables.delivery_region_payments = generateDeliveryRegionPayments(
-//     tables.delivery_methods,
-//     tables.regions,
-//     tables.payment_methods,
-//     180
-//   );
-//   tables.delivery_addresses = generateDeliveryAddresses(tables.regions, 150);
-//   tables.orders = generateOrders(
-//     tables.customers,
-//     tables.delivery_region_payments,
-//     tables.delivery_addresses,
-//     800
-//   );
-//   tables.categories = generateCategories(35);
-
-//   // Кількість записів у product_supplier_warehouse
-//   const numPSW = 1000;
-
-//   tables.products = generateProducts(
-//     tables.categories,
-//     Math.min(150, Math.max(12, Math.floor(numPSW * 0.045)))
-//   );
-//   tables.suppliers = generateSuppliers(
-//     Math.min(150, Math.max(12, Math.floor(numPSW * 0.05)))
-//   );
-//   tables.warehouses = generateWarehouses(
-//     tables.regions,
-//     Math.max(10, Math.min(100, Math.floor(numPSW * 0.03)))
-//   );
-
-//   tables.product_supplier_warehouse = _.sortBy(
-//     generateProductSupplierWarehouses(
-//       tables.products,
-//       tables.suppliers,
-//       tables.warehouses,
-//       numPSW
-//     ),
-//     ["product_id", "supplier_id", "warehouse_id"]
-//   );
-
-//   tables.supplier_contacts = generateSupplierContacts(
-//     tables.suppliers,
-//     tables.suppliers.length * 1.3
-//   );
-
-//   tables.order_items = generateOrderItems(
-//     tables.orders,
-//     tables.product_supplier_warehouse,
-//     150
-//   );
-
-//   return tables;
-// }
 
 export default function combineNF3(sizes) {
   const tables = {};
 
-  const customers = generateCustomers(sizes.customers);
+  tables.customers = generateCustomers(sizes.customers);
   tables.payment_methods = generatePaymentMethods();
   tables.delivery_methods = generateDeliveryMethods();
+
   tables.regions = generateRegions(sizes.regions);
-  tables.delivery_region_payments = generateDeliveryRegionPayments(
+  tables.cities = generateCities(tables.regions, sizes.cities);
+  tables.streets = generateStreets(tables.cities, sizes.streets);
+  tables.addresses = generateAddresses(tables.streets, sizes.addresses);
+
+  tables.orders = generateOrders(
+    tables.customers,
     tables.delivery_methods,
-    tables.regions,
     tables.payment_methods,
-    sizes.delivery_region_payments
-  );
-
-  tables.delivery_addresses = generateDeliveryAddresses(
-    tables.regions,
-    sizes.delivery_addresses
-  );
-
-  const orders = generateOrders(
-    customers,
-    tables.delivery_region_payments,
-    tables.delivery_addresses,
+    tables.addresses,
     sizes.orders
   );
-
-  const usedCustomers = [
-    ...new Set(orders.map(({ customer_id }) => customer_id)),
-  ];
-
-  const idMap = new Map();
-
-  tables.customers = customers
-    .filter((c) => usedCustomers.includes(c.id))
-    .map((c, i) => {
-      if (c.id !== i + 1) {
-        const newId = i + 1;
-        idMap.set(c.id, newId);
-        return { ...c, id: newId };
-      }
-      return c;
-    });
-
-  tables.orders = orders.map((order) => ({
-    ...order,
-    customer_id: idMap.get(order.customer_id) ?? order.customer_id,
-  }));
 
   tables.categories = generateCategories(sizes.categories);
   tables.products = generateProducts(tables.categories, sizes.products);
   tables.suppliers = generateSuppliers(sizes.suppliers);
-  tables.warehouses = generateWarehouses(tables.regions, sizes.warehouses);
+  tables.warehouses = generateWarehouses(tables.addresses, sizes.warehouses);
 
   tables.product_supplier_warehouse = _.sortBy(
     generateProductSupplierWarehouses(
@@ -142,16 +54,73 @@ export default function combineNF3(sizes) {
     ["product_id", "supplier_id", "warehouse_id"]
   );
 
-  tables.supplier_contacts = generateSupplierContacts(
-    tables.suppliers,
-    tables.suppliers.length * 1.3
-  );
-
   tables.order_items = generateOrderItems(
     tables.orders,
     tables.product_supplier_warehouse,
     sizes.order_items
   );
+
+  const usedOrders = new Set(
+    tables.order_items.map(({ order_id }) => order_id)
+  );
+
+  tables.orders = tables.orders.filter((o) => usedOrders.has(o.id));
+
+  const usedProd = new Set(
+    tables.product_supplier_warehouse.map(({ product_id }) => product_id)
+  );
+  const usedSuppl = new Set(
+    tables.product_supplier_warehouse.map(({ supplier_id }) => supplier_id)
+  );
+  const usedWare = new Set(
+    tables.product_supplier_warehouse.map(({ warehouse_id }) => warehouse_id)
+  );
+
+  tables.products = tables.products.filter((p) => usedProd.has(p.id));
+  tables.suppliers = tables.suppliers.filter((s) => usedSuppl.has(s.id));
+  tables.supplier_contacts = generateSupplierContacts(tables.suppliers);
+  tables.warehouses = tables.warehouses.filter((w) => usedWare.has(w.id));
+
+  const usedCateg = new Set(
+    tables.products.map(({ category_id }) => category_id)
+  );
+
+  tables.categories = tables.categories.filter((c) => usedCateg.has(c.id));
+
+  const usedCustomers = new Set(
+    tables.orders.map(({ customer_id }) => customer_id)
+  );
+  const usedPayMethod = new Set(
+    tables.orders.map(({ payment_method_id }) => payment_method_id)
+  );
+  const usedDelivMethod = new Set(
+    tables.orders.map(({ delivery_method_id }) => delivery_method_id)
+  );
+
+  tables.customers = tables.customers.filter((c) => usedCustomers.has(c.id));
+  tables.payment_methods = tables.payment_methods.filter((p) =>
+    usedPayMethod.has(p.id)
+  );
+  tables.delivery_methods = tables.delivery_methods.filter((d) =>
+    usedDelivMethod.has(d.id)
+  );
+
+  const usedAddress = new Set([
+    ...tables.orders.map(({ delivery_address_id }) => delivery_address_id),
+    ...tables.warehouses.map(({ address_id }) => address_id),
+  ]);
+  tables.addresses = tables.addresses.filter((a) => usedAddress.has(a.id));
+
+  const usedStreets = new Set(
+    tables.addresses.map(({ street_id }) => street_id)
+  );
+  tables.streets = tables.streets.filter((s) => usedStreets.has(s.id));
+
+  const usedCities = new Set(tables.streets.map(({ city_id }) => city_id));
+  tables.cities = tables.cities.filter((c) => usedCities.has(c.id));
+
+  const usedRegions = new Set(tables.cities.map(({ region_id }) => region_id));
+  tables.regions = tables.regions.filter((r) => usedRegions.has(r.id));
 
   return tables;
 }

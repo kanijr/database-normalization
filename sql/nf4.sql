@@ -24,25 +24,26 @@ CREATE TABLE nf4.regions (
     region_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE nf4.delivery_payments (
-	delivery_method_id INT NOT NULL REFERENCES nf4.delivery_methods(id),
-	payment_method_id INT NOT NULL REFERENCES nf4.payment_methods(id),
-	PRIMARY KEY (delivery_method_id, payment_method_id)
+CREATE TABLE nf4.cities (
+    id SERIAL PRIMARY KEY,
+    city_name VARCHAR(100) NOT NULL,
+	region_id INT NOT NULL REFERENCES nf4.regions(id),
+	CONSTRAINT uq_city_region UNIQUE (city_name,region_id)
 );
 
-CREATE TABLE nf4.region_payments (
-	region_id INT NOT NULL REFERENCES nf4.regions(id),
-	payment_method_id INT NOT NULL REFERENCES nf4.payment_methods(id),
-	PRIMARY KEY (region_id, payment_method_id)
+CREATE TABLE nf4.streets (
+    id SERIAL PRIMARY KEY,
+    street_name VARCHAR(100) NOT NULL,
+	city_id INT NOT NULL REFERENCES nf4.cities(id),
+	CONSTRAINT uq_street_city UNIQUE (street_name,city_id)
 );
 
-CREATE TABLE nf4.delivery_addresses(
-	id SERIAL PRIMARY KEY,
-	region_id INT NOT NULL REFERENCES nf4.regions(id),
-	city VARCHAR(80) NOT NULL,
-	street VARCHAR(100) NOT NULL,
-	house VARCHAR(10) NOT NULL,
-	apartment VARCHAR(10)
+CREATE TABLE nf4.addresses (
+    id SERIAL PRIMARY KEY,
+    building VARCHAR(10) NOT NULL,
+	apartment VARCHAR(10),
+	street_id INT NOT NULL REFERENCES nf4.streets(id),
+	CONSTRAINT uq_address_street UNIQUE (building,apartment,street_id)
 );
 
 CREATE TABLE nf4.orders (
@@ -51,7 +52,7 @@ CREATE TABLE nf4.orders (
 	customer_id INT NOT NULL REFERENCES nf4.customers(id),
 	payment_method_id INT NOT NULL REFERENCES nf4.payment_methods(id),
 	delivery_method_id INT NOT NULL REFERENCES nf4.delivery_methods(id),
-	delivery_address_id INT NOT NULL REFERENCES nf4.delivery_addresses(id),
+	delivery_address_id INT NOT NULL REFERENCES nf4.addresses(id),
 	delivery_date DATE NOT NULL,
 	delivery_status BOOLEAN NOT NULL DEFAULT FALSE
 );
@@ -80,11 +81,8 @@ CREATE TABLE nf4.supplier_contact_emails(
 
 CREATE TABLE nf4.warehouses ( 
 	id SERIAL PRIMARY KEY,
-	region_id INT NOT NULL REFERENCES nf4.regions(id),
-	city VARCHAR(80) NOT NULL,
-	street VARCHAR(100) NOT NULL,
-	building VARCHAR(10) NOT NULL,
-	apartment VARCHAR(10)
+	warehouse_name VARCHAR(100) UNIQUE NOT NULL,
+	address_id INT NOT NULL REFERENCES nf4.addresses(id)
 );
 
 CREATE TABLE nf4.products (

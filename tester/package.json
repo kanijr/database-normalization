@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "testDurations": "node src/index.js",
+    "generate": "node src/generator/generator.js",
     "testOrders": "node src/api/testAllOrders.js",
     "testPS": "node src/api/testAllProductsStock.js"
   },

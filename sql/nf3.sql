@@ -24,20 +24,27 @@ CREATE TABLE nf3.regions (
     region_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE nf3.delivery_region_payments (
-    delivery_method_id INT NOT NULL REFERENCES nf3.delivery_methods(id),
-    region_id INT NOT NULL REFERENCES nf3.regions(id),
-    payment_method_id INT NOT NULL REFERENCES nf3.payment_methods(id),
-    PRIMARY KEY (delivery_method_id, region_id, payment_method_id)
+CREATE TABLE nf3.cities (
+    id SERIAL PRIMARY KEY,
+    city_name VARCHAR(100) NOT NULL,
+	region_id INT NOT NULL REFERENCES nf3.regions(id),
+	CONSTRAINT uq_city_region UNIQUE (city_name,region_id)
 );
 
-CREATE TABLE nf3.delivery_addresses(
-	id SERIAL PRIMARY KEY,
-	region_id INT NOT NULL REFERENCES nf3.regions(id),
-	city VARCHAR(80) NOT NULL,
-	street VARCHAR(100) NOT NULL,
-	house VARCHAR(10) NOT NULL,
-	apartment VARCHAR(10)
+CREATE TABLE nf3.streets (
+    id SERIAL PRIMARY KEY,
+    street_name VARCHAR(100) NOT NULL,
+	city_id INT NOT NULL REFERENCES nf3.cities(id),
+	CONSTRAINT uq_street_city UNIQUE (street_name,city_id)
+);
+
+
+CREATE TABLE nf3.addresses (
+    id SERIAL PRIMARY KEY,
+    building VARCHAR(10) NOT NULL,
+	apartment VARCHAR(10),
+	street_id INT NOT NULL REFERENCES nf3.streets(id),
+	CONSTRAINT uq_address_street UNIQUE (building,apartment,street_id)
 );
 
 CREATE TABLE nf3.orders (
@@ -46,7 +53,7 @@ CREATE TABLE nf3.orders (
 	customer_id INT NOT NULL REFERENCES nf3.customers(id),
 	payment_method_id INT NOT NULL REFERENCES nf3.payment_methods(id),
 	delivery_method_id INT NOT NULL REFERENCES nf3.delivery_methods(id),
-	delivery_address_id INT NOT NULL REFERENCES nf3.delivery_addresses(id),
+	delivery_address_id INT NOT NULL REFERENCES nf3.addresses(id),
 	delivery_date DATE NOT NULL,
 	delivery_status BOOLEAN NOT NULL DEFAULT FALSE
 );
@@ -72,11 +79,8 @@ CREATE TABLE nf3.supplier_contacts(
 
 CREATE TABLE nf3.warehouses ( 
 	id SERIAL PRIMARY KEY,
-	region_id INT NOT NULL REFERENCES nf3.regions(id),
-	city VARCHAR(80) NOT NULL,
-	street VARCHAR(100) NOT NULL,
-	building VARCHAR(10) NOT NULL,
-	apartment VARCHAR(10)
+	warehouse_name VARCHAR(100) UNIQUE NOT NULL,
+	address_id INT NOT NULL REFERENCES nf3.addresses(id)
 );
 
 CREATE TABLE nf3.products (

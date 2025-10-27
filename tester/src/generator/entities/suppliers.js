@@ -11,8 +11,8 @@ export function generateSupplierContacts(suppliers) {
   const contacts = [];
 
   for (const supplier of suppliers) {
-    const phoneCount = faker.number.int({ min: 1, max: 3 });
-    const emailCount = faker.number.int({ min: 1, max: 3 });
+    const phoneCount = faker.number.int({ min: 1, max: 5 });
+    const emailCount = faker.number.int({ min: 1, max: 5 });
 
     const phones = Array.from({ length: phoneCount }, () =>
       faker.phone.number({ style: "international" })

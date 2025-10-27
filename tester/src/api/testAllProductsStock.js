@@ -4,11 +4,18 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let datas = [];
 
-await fetch(`http://localhost:3000/api/nf1/allProducts_stock`);
+// await fetch(`http://localhost:3000/api/nf1/allProducts_stock`);
 await sleep(1000);
+
 for (let i = 1; i <= 5; i++) {
   const res = await fetch(`http://localhost:3000/api/nf${i}/allProducts_stock`);
   const data = await res.json();
+
+  if (data.error) {
+    console.log(data.error);
+    process.exit(1);
+  }
+
   console.log(`Products stock: durations from NF${i}: ${data.durationMs} ms`);
   datas.push(data);
   await sleep(1000);

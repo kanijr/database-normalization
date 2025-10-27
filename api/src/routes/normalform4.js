@@ -25,8 +25,9 @@ router.get("/truncate", async (req, res) => {
 
 router.get("/allOrders", async (req, res) => {
   const client = createClient();
+  const { limit } = req.query;
   try {
-    const sql = nf4Queries.getAllOrders();
+    const sql = nf4Queries.getAllOrders(limit);
 
     await client.connect();
 
@@ -116,12 +117,7 @@ router.get("/allProducts_stock", async (req, res) => {
 Object.keys(nf4Fields).forEach((key) => {
   router.post(
     `/${key}`,
-    createInsertRoute(
-      createClient,
-      "nf4",
-      key,
-      nf4Fields[key].filter((f) => f !== "id")
-    )
+    createInsertRoute(createClient, "nf4", key, nf4Fields[key])
   );
 });
 

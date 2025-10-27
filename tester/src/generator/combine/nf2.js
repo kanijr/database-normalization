@@ -8,12 +8,13 @@ export default function combineNF2(nf3Tables) {
       delivery_address_id,
       ...order
     }) => {
-      const da = nf3Tables.delivery_addresses.find(
-        (x) => x.id === delivery_address_id
+      const address = nf3Tables.addresses.find(
+        (a) => a.id === delivery_address_id
       );
-
-      da.region = nf3Tables.regions.find(
-        (x) => x.id === da.region_id
+      const street = nf3Tables.streets.find((s) => s.id === address.street_id);
+      const city = nf3Tables.cities.find((c) => c.id === street.city_id);
+      const region = nf3Tables.regions.find(
+        (r) => r.id === city.region_id
       ).region_name;
 
       const dm = nf3Tables.delivery_methods.find(
@@ -43,11 +44,11 @@ export default function combineNF2(nf3Tables) {
         payment_fee: pm.payment_fee,
         delivery_method: dm.method_name,
         delivery_fee: dm.delivery_fee,
-        delivery_region: da.region,
-        delivery_city: da.city,
-        delivery_street: da.street,
-        delivery_house: da.house,
-        delivery_apartment: da.apartment,
+        delivery_region: region,
+        delivery_city: city.city_name,
+        delivery_street: street.street_name,
+        delivery_house: address.building,
+        delivery_apartment: address.apartment,
       };
     }
   );
@@ -62,20 +63,25 @@ export default function combineNF2(nf3Tables) {
     const { supplier_name } = nf3Tables.suppliers.find(
       (x) => x.id === psw.supplier_id
     );
-    const wa = nf3Tables.warehouses.find((x) => x.id === psw.warehouse_id);
-    wa.region = nf3Tables.regions.find(
-      (x) => x.id === wa.region_id
+    const wa = nf3Tables.warehouses.find((w) => w.id === psw.warehouse_id);
+
+    const address = nf3Tables.addresses.find((s) => s.id === wa.address_id);
+    const street = nf3Tables.streets.find((s) => s.id === address.street_id);
+    const city = nf3Tables.cities.find((c) => c.id === street.city_id);
+    const region = nf3Tables.regions.find(
+      (r) => r.id === city.region_id
     ).region_name;
 
     return {
       id: i + 1,
       ...pr,
       supplier_name,
-      warehouse_region: wa.region,
-      warehouse_city: wa.city,
-      warehouse_street: wa.street,
-      warehouse_building: wa.building,
-      warehouse_apartment: wa.apartment,
+      warehouse_name: wa.warehouse_name,
+      warehouse_region: region,
+      warehouse_city: city.city_name,
+      warehouse_street: street.street_name,
+      warehouse_building: address.building,
+      warehouse_apartment: address.apartment,
       psw,
     };
   });
