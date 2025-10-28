@@ -1,5 +1,5 @@
 const nf4Queries = {
-  getAllOrders: (
+  getOrders: (
     limit,
     customerId
   ) => `SELECT oi.order_id AS order_id, first_name AS customer_first_name, last_name AS customer_last_name,
@@ -41,10 +41,7 @@ const nf4Queries = {
       limit !== undefined ? `\nLIMIT ${limit}` : ""
     };`,
 
-  getAllProductsStock: `SELECT 
-        CAST(ROW_NUMBER() OVER(
-          ORDER BY psw.product_id, psw.supplier_id, psw.warehouse_id
-        ) AS INT) AS product_id,
+  getProductsStock: (limit, supplier_id) => `SELECT 
         ps.product_name,
         c.category_name,
         s.supplier_name,
@@ -73,7 +70,10 @@ const nf4Queries = {
     JOIN nf4.addresses ad ON w.address_id = ad.id
     JOIN nf4.streets str ON ad.street_id = str.id
     JOIN nf4.cities ci ON ci.id = str.city_id
-    JOIN nf4.regions r ON r.id = ci.region_id;`,
+    JOIN nf4.regions r ON r.id = ci.region_id
+    ${supplier_id !== undefined ? `WHERE s.id = '${supplier_id}'` : ""} 
+    ORDER BY psw.product_id, psw.supplier_id, psw.warehouse_id
+    ${limit !== undefined ? `\nLIMIT ${limit}` : ""};`,
 };
 
 export default nf4Queries;

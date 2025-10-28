@@ -1,5 +1,5 @@
 const nf2Queries = {
-  getAllOrders: (limit, customerId) =>
+  getOrders: (limit, customerId) =>
     `SELECT oi.order_id AS order_id, first_name AS customer_first_name, 
     last_name AS customer_last_name, email AS customer_email, order_date, payment_method,
     payment_amount, payment_fee, delivery_method, delivery_fee, delivery_region,
@@ -24,8 +24,7 @@ const nf2Queries = {
       limit !== undefined ? `\nLIMIT ${limit}` : ""
     };`,
 
-  getAllProductsStock: `SELECT 
-        ps.id AS product_id,
+  getProductsStock: (limit, supplier_name) => `SELECT 
         product_name, category_name,
         ps.supplier_name,
         sc.supplier_phones, 
@@ -42,7 +41,12 @@ const nf2Queries = {
       FROM nf2.supplier_contacts
       GROUP BY supplier_name
     ) sc ON sc.supplier_name = ps.supplier_name
-    ORDER BY ps.id;`,
+              ${
+                supplier_name !== undefined
+                  ? `WHERE ps.supplier_name = '${supplier_name}'`
+                  : ""
+              } 
+    ORDER BY ps.id${limit !== undefined ? `\nLIMIT ${limit}` : ""};`,
 };
 
 export default nf2Queries;

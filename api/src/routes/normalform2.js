@@ -22,11 +22,11 @@ router.get("/truncate", async (req, res) => {
   }
 });
 
-router.get("/allOrders", async (req, res) => {
+router.get("/orders", async (req, res) => {
   const client = createClient();
-  const { limit } = req.query;
+  const { limit, customer_id } = req.query;
   try {
-    const sql = nf2Queries.getAllOrders(limit);
+    const sql = nf2Queries.getOrders(limit, customer_id);
 
     await client.connect();
 
@@ -50,47 +50,16 @@ router.get("/allOrders", async (req, res) => {
   }
 });
 
-router.get("/ordersByCustomer", async (req, res) => {
+router.get("/productsStock", async (req, res) => {
   const client = createClient();
-  const { customer_id } = req.query;
-  if (!customer_id) {
-    return res.status(400).json({ error: "Missing query parameters" });
-  }
-  try {
-    const sql = nf2Queries.getAllOrders(customer_id);
 
-    await client.connect();
-
-    const startTime = process.hrtime.bigint(); // High-resolution time start
-
-    const result = await client.query(sql);
-
-    const endTime = process.hrtime.bigint(); // High-resolution time end
-    const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
-
-    console.log(
-      `\nNF2 Orders by customer: Select query executed in ${durationMs} ms`
-    );
-
-    res.json({
-      durationMs,
-      rows: result.rows,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  } finally {
-    client.end();
-  }
-});
-
-router.get("/allProducts_stock", async (req, res) => {
-  const client = createClient();
+  const { limit, supplier_name } = req.query;
   try {
     await client.connect();
 
     const startTime = process.hrtime.bigint(); // High-resolution time start
 
-    const sql = nf2Queries.getAllProductsStock;
+    const sql = nf2Queries.getProductsStock(limit, supplier_name);
 
     const result = await client.query(sql);
 

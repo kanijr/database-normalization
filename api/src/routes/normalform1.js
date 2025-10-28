@@ -22,11 +22,24 @@ router.get("/truncate", async (req, res) => {
   }
 });
 
-router.get("/allOrders", async (req, res) => {
+router.get("/orders", async (req, res) => {
   const client = createClient();
-  const { limit } = req.query;
+  const { limit, customer_first_name, customer_last_name, customer_email } =
+    req.query;
+
+  let customer = undefined;
+  if (customer_first_name && customer_last_name && customer_email) {
+    customer = {
+      first_name: customer_first_name,
+      last_name: customer_last_name,
+      email: customer_email,
+    };
+  } else if (customer_first_name || customer_email || customer_email) {
+    return res.status(400).json({ error: "Missing query parameters" });
+  }
+
   try {
-    const sql = nf1Queries.getAllOrders(limit);
+    const sql = nf1Queries.getOrders(limit, customer);
 
     await client.connect();
 
@@ -50,51 +63,15 @@ router.get("/allOrders", async (req, res) => {
   }
 });
 
-router.get("/ordersByCustomer", async (req, res) => {
+router.get("/productsStock", async (req, res) => {
   const client = createClient();
-  const { customer_first_name, customer_last_name, customer_email } = req.query;
-  if (!customer_first_name || !customer_last_name || !customer_email) {
-    return res.status(400).json({ error: "Missing query parameters" });
-  }
-  try {
-    const sql = nf1Queries.getAllOrders(
-      customer_first_name.replaceAll("'", "''"),
-      customer_last_name.replaceAll("'", "''"),
-      customer_email
-    );
-
-    await client.connect();
-
-    const startTime = process.hrtime.bigint(); // High-resolution time start
-
-    const result = await client.query(sql);
-
-    const endTime = process.hrtime.bigint(); // High-resolution time end
-    const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
-
-    console.log(
-      `\nNF1 Orders by customer: Select query executed in ${durationMs} ms`
-    );
-
-    res.json({
-      durationMs,
-      rows: result.rows,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  } finally {
-    client.end();
-  }
-});
-
-router.get("/allProducts_stock", async (req, res) => {
-  const client = createClient();
+  const { limit, supplier_name } = req.query;
   try {
     await client.connect();
 
     const startTime = process.hrtime.bigint(); // High-resolution time start
 
-    const sql = nf1Queries.getAllProductsStock;
+    const sql = nf1Queries.getProductsStock(limit, supplier_name);
 
     const result = await client.query(sql);
 

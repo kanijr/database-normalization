@@ -1,5 +1,5 @@
 const nf1Queries = {
-  getAllOrders: (limit, customer) =>
+  getOrders: (limit, customer) =>
     `SELECT o.*, sc.supplier_phones, sc.supplier_emails FROM nf1.orders o
        LEFT JOIN (
             SELECT
@@ -11,15 +11,15 @@ const nf1Queries = {
           ) sc ON sc.supplier_name = o.supplier_name
      ${
        customer !== undefined
-         ? `WHERE customer_first_name = '${customer.firstName}' AND 
-      customer_last_name = '${customer.lastName}' AND customer_email = '${customer.email}'`
+         ? `WHERE customer_first_name = '${customer.first_name}' AND 
+      customer_last_name = '${customer.last_name}' AND customer_email = '${customer.email}'`
          : ""
      } 
     ORDER BY order_id, product_name, o.supplier_name, warehouse_name${
       limit !== undefined ? `\nLIMIT ${limit}` : ""
     };`,
-  getAllProductsStock: `SELECT 
-        ps.id AS product_id,
+
+  getProductsStock: (limit, supplier_name) => `SELECT 
         product_name, category_name,
         ps.supplier_name,
         sc.supplier_phones, 
@@ -36,7 +36,12 @@ const nf1Queries = {
       FROM nf1.supplier_contacts
       GROUP BY supplier_name
     ) sc ON sc.supplier_name = ps.supplier_name
-    ORDER BY ps.id;`,
+          ${
+            supplier_name !== undefined
+              ? `WHERE ps.supplier_name = '${supplier_name}'`
+              : ""
+          } 
+    ORDER BY ps.id ${limit !== undefined ? `\nLIMIT ${limit}` : ""};`,
 };
 
 export default nf1Queries;
