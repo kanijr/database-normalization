@@ -1,16 +1,11 @@
 CREATE SCHEMA nf2;
 
-CREATE TABLE nf2.customers (
-	id SERIAL PRIMARY KEY,
-	first_name VARCHAR(128) NOT NULL,
-	last_name VARCHAR(128) NOT NULL,
-	email VARCHAR(255) NOT NULL
-);
-
 CREATE TABLE nf2.orders (
 	id SERIAL PRIMARY KEY,
 	order_date DATE NOT NULL,
-	customer_id INT NOT NULL REFERENCES nf2.customers(id), 
+	customer_first_name VARCHAR(128) NOT NULL,
+	customer_last_name VARCHAR(128) NOT NULL,
+	customer_email VARCHAR(255) NOT NULL,
 	payment_method VARCHAR(50),
 	payment_amount NUMERIC(10,2) NOT NULL CHECK(payment_amount >= 0),
 	payment_fee NUMERIC(8,2) NOT NULL CHECK(payment_fee >= 0),

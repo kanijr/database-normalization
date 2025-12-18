@@ -1,11 +1,13 @@
-export function createInsertRoute(createClient, schema, fieldKey, fieldsName) {
+import pool from "../db/index.js";
+
+export function createInsertRoute(schema, fieldKey, fieldsName) {
   return async (req, res) => {
     const data = req.body[fieldKey];
     if (!data || !data.length) {
       return res.status(400).json({ error: `Field "${fieldKey}" is required` });
     }
-    const client = createClient();
     try {
+      const startTime = process.hrtime.bigint(); // High-resolution time start
       const sql = `INSERT INTO ${schema}.${fieldKey} (${fieldsName.join(
         ", "
       )})\nVALUES ${data.map(
@@ -15,41 +17,36 @@ export function createInsertRoute(createClient, schema, fieldKey, fieldsName) {
             .map((_, j) => "$" + (i * fieldsName.length + j + 1))
             .join(", ") +
           ")"
-      )} RETURNING *;`;
+      )};`;
 
       const values = [];
 
       for (const obj of data) values.push(...fieldsName.map((f) => obj[f]));
-      await client.connect();
-      const result = await client.query(sql, values);
-      res.json(result);
+
+      const result = await pool.query(sql, values);
+
+      const endTime = process.hrtime.bigint(); // High-resolution time end
+      const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
+
+      res.json({
+        durationInDb: await getQueryExecTime(sql),
+        durationMs,
+      });
     } catch (err) {
       console.log(err);
       res
         .status(400)
         .json({ errorFrom: `${schema}.${fieldKey}`, error: err.message });
-    } finally {
-      client.end();
     }
   };
 }
 
-export async function getTablesColumns(client, schema, tables) {
-  const result = {};
+export async function getQueryExecTime(sql) {
+  const result = await pool.query(
+    `SELECT total_exec_time, total_plan_time FROM pg_stat_statements WHERE query LIKE $1`,
+    [sql.split("\n")[0] + "%"]
+  );
 
-  for (const table of tables) {
-    const res = await client.query(
-      `
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_schema = $1 AND table_name = $2
-      ORDER BY ordinal_position;
-      `,
-      [schema, table]
-    );
-
-    result[table] = res.rows.map((r) => r.column_name);
-  }
-
-  return result;
+  await pool.query(`SELECT pg_stat_statements_reset()`);
+  return result.rows[0].total_exec_time + result.rows[0].total_plan_time;
 }

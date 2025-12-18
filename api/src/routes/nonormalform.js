@@ -1,35 +1,19 @@
 import express from "express";
 import pool from "../db/index.js";
-import { nf3Fields } from "../utils/fields.js";
+import { nnfFields } from "../utils/fields.js";
 import { createInsertRoute, getQueryExecTime } from "../utils/routeUtils.js";
-import nf3Queries from "../selectQueries/nf3.js";
+import nnfQueries from "../selectQueries/nnf.js";
 
 const router = new express.Router();
 
 router.get("/truncate", async (req, res) => {
   try {
-    // for (const key of Object.keys(nf3Fields)) {
-    //   await pool.query(`TRUNCATE TABLE nf3.${key} RESTART IDENTITY CASCADE;`);
+    // for (const key of Object.keys(nnfFields)) {
+    //   await pool.query(`TRUNCATE TABLE nnf.${key} RESTART IDENTITY CASCADE;`);
     // }
 
-    for (const key of [
-      "order_items",
-      "orders",
-      "delivery_methods",
-      "payment_methods",
-      "customers",
-      "product_supplier_warehouse",
-      "products",
-      "categories",
-      "supplier_contacts",
-      "suppliers",
-      "warehouses",
-      "addresses",
-      "streets",
-      "cities",
-      "regions",
-    ]) {
-      await pool.query(`DELETE FROM nf3.${key};`);
+    for (const key of ["orders", "products_stock"]) {
+      await pool.query(`DELETE FROM nnf.${key};`);
     }
 
     res.status(200).json({});
@@ -39,9 +23,20 @@ router.get("/truncate", async (req, res) => {
 });
 
 router.get("/orders", async (req, res) => {
-  const { limit, customer_id } = req.query;
+  const { limit, customer_full_name, customer_email } = req.query;
+
+  let customer = undefined;
+  if (customer_full_name && customer_email) {
+    customer = {
+      full_name: customer_full_name,
+      email: customer_email,
+    };
+  } else if (customer_full_name || customer_email) {
+    return res.status(400).json({ error: "Missing query parameters" });
+  }
+
   try {
-    const sql = nf3Queries.getOrders(limit, customer_id);
+    const sql = nnfQueries.getOrders(limit, customer);
 
     const startTime = process.hrtime.bigint(); // High-resolution time start
 
@@ -50,7 +45,7 @@ router.get("/orders", async (req, res) => {
     const endTime = process.hrtime.bigint(); // High-resolution time end
     const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
 
-    console.log(`\nNF3 Orders: Select query executed in ${durationMs} ms`);
+    console.log(`\nnnf Orders: Select query executed in ${durationMs} ms`);
 
     res.json({
       durationInDb: await getQueryExecTime(sql),
@@ -63,11 +58,11 @@ router.get("/orders", async (req, res) => {
 });
 
 router.get("/productsStock", async (req, res) => {
-  const { limit, supplier_id } = req.query;
+  const { limit, supplier_name } = req.query;
   try {
     const startTime = process.hrtime.bigint(); // High-resolution time start
 
-    const sql = nf3Queries.getProductsStock(limit, supplier_id);
+    const sql = nnfQueries.getProductsStock(limit, supplier_name);
 
     const result = await pool.query(sql);
 
@@ -75,7 +70,7 @@ router.get("/productsStock", async (req, res) => {
     const durationMs = Number(endTime - startTime) / 1_000_000; // Duration in milliseconds
 
     console.log(
-      `\nNF3 Products_stock: Select query executed in ${durationMs} ms`
+      `\nnnf Products_stock: Select query executed in ${durationMs} ms`
     );
 
     res.json({
@@ -88,9 +83,9 @@ router.get("/productsStock", async (req, res) => {
   }
 });
 
-// створюю для кожної таблиці окремий ендпоінт для додавання записів
-Object.keys(nf3Fields).forEach((key) => {
-  router.post(`/${key}`, createInsertRoute("nf3", key, nf3Fields[key]));
+// Створюю для кожної таблиці окремий ендпоінт для додавання записів
+Object.keys(nnfFields).forEach((key) => {
+  router.post(`/${key}`, createInsertRoute("nnf", key, nnfFields[key]));
 });
 
 export default router;

@@ -1,13 +1,114 @@
-export default function combineNF2(nf3Tables) {
-  const { customers } = nf3Tables;
+// export default function combineNF2(nf3Tables) {
+//   const orders = nf3Tables.orders.map(
+//     ({
+//       customer_id,
+//       payment_method_id,
+//       delivery_method_id,
+//       delivery_address_id,
+//       ...order
+//     }) => {
+//       const customer = nf3Tables.customers.find((c) => c.id === customer_id);
+//       const address = nf3Tables.addresses.find(
+//         (a) => a.id === delivery_address_id
+//       );
+//       const street = nf3Tables.streets.find((s) => s.id === address.street_id);
+//       const city = nf3Tables.cities.find((c) => c.id === street.city_id);
+//       const region = nf3Tables.regions.find(
+//         (r) => r.id === city.region_id
+//       ).region_name;
 
+//       const dm = nf3Tables.delivery_methods.find(
+//         (x) => x.id === delivery_method_id
+//       );
+//       const pm = nf3Tables.payment_methods.find(
+//         (x) => x.id === payment_method_id
+//       );
+//       const amount = nf3Tables.order_items
+//         .filter((orderItem) => orderItem.order_id === order.id)
+//         .reduce(
+//           (sum, orderItem) =>
+//             sum +
+//             Number(
+//               nf3Tables.products.find(
+//                 (prod) => prod.id === orderItem.product_id
+//               ).price
+//             ) *
+//               Number(orderItem.quantity),
+//           0
+//         );
+
+//       return {
+//         ...order,
+//         customer_first_name: customer.first_name,
+//         customer_last_name: customer.last_name,
+//         customer_email: customer.email,
+//         payment_method: pm.method_name,
+//         payment_amount: amount,
+//         payment_fee: pm.payment_fee,
+//         delivery_method: dm.method_name,
+//         delivery_fee: dm.delivery_fee,
+//         delivery_region: region,
+//         delivery_city: city.city_name,
+//         delivery_street: street.street_name,
+//         delivery_house: address.building,
+//         delivery_apartment: address.apartment,
+//       };
+//     }
+//   );
+
+//   const warehouses = nf3Tables.warehouses.map((w, i) => {
+//     const address = nf3Tables.addresses.find((s) => s.id === w.address_id);
+//     const street = nf3Tables.streets.find((s) => s.id === address.street_id);
+//     const city = nf3Tables.cities.find((c) => c.id === street.city_id);
+//     const region = nf3Tables.regions.find(
+//       (r) => r.id === city.region_id
+//     ).region_name;
+
+//     return {
+//       ...w,
+//       warehouse_region: region,
+//       warehouse_city: city.city_name,
+//       warehouse_street: street.street_name,
+//       warehouse_building: address.building,
+//       warehouse_apartment: address.apartment,
+//     };
+//   });
+
+//   const products = nf3Tables.products.map(({ category_id, ...p }) => {
+//     const { category_name } = nf3Tables.categories.find(
+//       (c) => c.id === category_id
+//     );
+//     return { ...p, category_name };
+//   });
+
+//   const {
+//     order_items,
+//     supplier_contacts,
+//     suppliers,
+//     product_supplier_warehouse,
+//   } = nf3Tables;
+
+//   return {
+//     orders,
+//     suppliers,
+//     warehouses,
+//     products,
+//     supplier_contacts,
+//     product_supplier_warehouse,
+//     order_items,
+//   };
+// }
+
+export default function combineNF2(nf3Tables) {
   const orders = nf3Tables.orders.map(
     ({
+      customer_id,
       payment_method_id,
       delivery_method_id,
       delivery_address_id,
       ...order
     }) => {
+      const customer = nf3Tables.customers.find((c) => c.id === customer_id);
       const address = nf3Tables.addresses.find(
         (a) => a.id === delivery_address_id
       );
@@ -39,6 +140,9 @@ export default function combineNF2(nf3Tables) {
 
       return {
         ...order,
+        customer_first_name: customer.first_name,
+        customer_last_name: customer.last_name,
+        customer_email: customer.email,
         payment_method: pm.method_name,
         payment_amount: amount,
         payment_fee: pm.payment_fee,
@@ -118,7 +222,6 @@ export default function combineNF2(nf3Tables) {
   );
 
   return {
-    customers,
     orders,
     products_stock,
     supplier_contacts,

@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "generate": "node src/generator/generator.js",
-    "testOrders": "node src/api/testAllOrders.js",
-    "testPS": "node src/api/testAllProductsStock.js"
+    "generateN": "node src/generator/generatorN.js",
+    "generateNOrder": "node src/generator/generatorNOrder.js",
+    "testOrders": "node src/api/testorders.js",
+    "testPS": "node src/api/testProductsStock.js"
   },
   "author": "",
   "license": "ISC",

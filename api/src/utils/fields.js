@@ -1,3 +1,40 @@
+export const nnfFields = {
+  orders: [
+    "order_id",
+    "customer_full_name",
+    "customer_email",
+    "order_date",
+    "payment_method",
+    "payment_amount",
+    "payment_fee",
+    "delivery_method",
+    "delivery_fee",
+    "delivery_address",
+    "delivery_date",
+    "delivery_status",
+    "product_name",
+    "category_name",
+    "supplier_name",
+    "supplier_phones",
+    "supplier_emails",
+    "warehouse_name",
+    "warehouse_address",
+    "price",
+    "quantity",
+  ],
+  products_stock: [
+    "id",
+    "product_name",
+    "category_name",
+    "supplier_name",
+    "supplier_phones",
+    "supplier_emails",
+    "warehouse_name",
+    "warehouse_address",
+    "price",
+  ],
+};
+
 export const nf1Fields = {
   orders: [
     "order_id",
@@ -26,8 +63,8 @@ export const nf1Fields = {
     "warehouse_street",
     "warehouse_building",
     "warehouse_apartment",
-    "quantity",
     "price",
+    "quantity",
   ],
   supplier_contacts: ["supplier_name", "phone", "email"],
   products_stock: [
@@ -46,11 +83,12 @@ export const nf1Fields = {
 };
 
 export const nf2Fields = {
-  customers: ["id", "first_name", "last_name", "email"],
   orders: [
     "id",
     "order_date",
-    "customer_id",
+    "customer_first_name",
+    "customer_last_name",
+    "customer_email",
     "payment_method",
     "payment_amount",
     "payment_fee",
@@ -80,6 +118,48 @@ export const nf2Fields = {
     "price",
   ],
 };
+// export const nf2Fields = {
+//   orders: [
+//     "id",
+//     "order_date",
+//     "customer_first_name",
+//     "customer_last_name",
+//     "customer_email",
+//     "payment_method",
+//     "payment_amount",
+//     "payment_fee",
+//     "delivery_method",
+//     "delivery_fee",
+//     "delivery_region",
+//     "delivery_city",
+//     "delivery_street",
+//     "delivery_house",
+//     "delivery_apartment",
+//     "delivery_date",
+//     "delivery_status",
+//   ],
+//   order_items: ["order_id", "product_id", "quantity"],
+//   suppliers: ["id", "supplier_name"],
+//   supplier_contacts: ["supplier_id", "phone", "email"],
+//   warehouses: [
+//     "id",
+//     "warehouse_name",
+//     "warehouse_region",
+//     "warehouse_city",
+//     "warehouse_street",
+//     "warehouse_building",
+//     "warehouse_apartment",
+//   ],
+//   products: ["id", "product_name", "category_name", "price"],
+//   product_supplier_warehouse: ["product_id", "supplier_id", "warehouse_id"],
+//   order_items: [
+//     "order_id",
+//     "product_id",
+//     "supplier_id",
+//     "warehouse_id",
+//     "quantity",
+//   ],
+// };
 
 export const nf3Fields = {
   customers: ["id", "first_name", "last_name", "email"],
