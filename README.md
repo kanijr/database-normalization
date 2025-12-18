@@ -1,20 +1,34 @@
-Create a PostgreSQL database (choose any name), then connect to it and run all SQL scripts from the sql/ folder against this database (manually, one by one, in the correct dependency order). After that, open api/src/db/index.js and set the connection settings (host/port/user/password/database) to match the database you created.
+Database Normalization Performance Research
 
-Start the API:
+This repository contains an experimental setup for researching how database normalization affects performance (inserts and selects) across different schema variants.
 
+Requirements
+
+PostgreSQL
+
+Node.js + npm
+
+Database setup
+
+Create a PostgreSQL database (any name). Connect to it and execute all SQL scripts from the sql/ folder manually (one by one, in dependency order).
+
+Then open api/src/db/index.js and set the DB connection parameters (host/port/user/password/database) to match your PostgreSQL database.
+
+Start API
 cd api
 npm install
-npm run dev (starts the Express.js server)
+npm run dev
 
-Prepare the tester project:
-
+Prepare tester
 cd tester
 npm install
 
-With the API running, run any script below from tester/:
+Run scripts (API must be running)
 
-npm run generate — inserts equivalent/consistent datasets for all schemas used in the research.
-npm run generateN — inserts only orders using the “new entities” variant (normalized order model).
-npm run generateNOrder — inserts only orders using existing entities (baseline entities, order-only scenario).
-npm run testOrders — benchmarks order queries (select tests) for each normal form/schema.
-npm run testPS — benchmarks product/stock queries (Products + Stock select tests).
+Run any of the following from the tester/ directory:
+
+npm run generate       # inserts equivalent datasets for all schemas
+npm run generateN      # inserts only orders (new entities variant)
+npm run generateNOrder # inserts only orders (existing entities variant)
+npm run testOrders     # benchmarks order selects for each schema
+npm run testPS         # benchmarks Products + Stock selects
